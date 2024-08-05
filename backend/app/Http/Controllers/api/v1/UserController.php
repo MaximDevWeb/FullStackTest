@@ -17,7 +17,7 @@ class UserController extends Controller
     public function index(UsersRequest $request): UsersCollection
     {
         $users = Cache::remember(
-            $request->fullUrl(),
+            'users_' . $request->getQueryString(),
             now()->addMinutes(60),
             function() use ($request) {
                 return User::query()
