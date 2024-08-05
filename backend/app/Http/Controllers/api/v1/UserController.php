@@ -7,6 +7,7 @@ use App\Http\Requests\User\UsersRequest;
 use App\Http\Resources\User\UsersCollection;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
@@ -15,12 +16,18 @@ class UserController extends Controller
      */
     public function index(UsersRequest $request): UsersCollection
     {
-        $users = User::query()
-            ->sort($request)
-            ->filterName($request)
-            ->filterActive($request)
-            ->filterActivityDate($request)
-            ->paginate($request->per_page ?? 25);
+        $users = Cache::remember(
+            $request->fullUrl(),
+            now()->addMinutes(60),
+            function() use ($request) {
+                return User::query()
+                    ->sort($request)
+                    ->filterName($request)
+                    ->filterActive($request)
+                    ->filterActivityDate($request)
+                    ->paginate($request->per_page ?? 25);
+                }
+        );
 
         return new UsersCollection($users);
     }
